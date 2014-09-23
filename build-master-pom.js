@@ -24,7 +24,7 @@ var buildOrdering = function(map, target) {
 projectmap(targetDir).then(function(map) {
     var buildList = buildOrdering(map, "bmweb");
     for (var i = 0; i < buildList.length; i++) {
-        console.log("<module>" + buildList[i] + "</module>");
+        console.log("<module>" + map[buildList[i]].subdir + "</module>");
     };
 }).fail(function(error) {
     console.log("Failed", error)

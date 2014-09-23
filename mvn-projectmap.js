@@ -6,7 +6,7 @@ var child_process = require('child_process');
 
 
 
-function readPom(repoDir) {
+function readPom(repoDir, subdir) {
     var deferred = Q.defer();
     fs.readFile(repoDir + "/pom.xml", function (error, data) {
         if (error) {
@@ -16,6 +16,7 @@ function readPom(repoDir) {
                 var project = {
                     project: pom.project.artifactId[0],
                     dir: repoDir,
+                    subdir: subdir,
                     dependencies: []
                 };
                 if (pom.project.parent) {
@@ -29,7 +30,7 @@ function readPom(repoDir) {
                         if (dependency.groupId[0] === 'com.brandmaster') {
                             project.dependencies.push(dependency.artifactId[0]);
                         }
-                    };        
+                    };
                 }
                 deferred.resolve(project);
             });
@@ -49,7 +50,7 @@ var buildProjectMap = function(dir) {
         for (var j=0; j<repos.length; j++) {
             var repoDir = dir + "/" + project + "/" + repos[j];
             if (fs.existsSync(repoDir + "/pom.xml")) {
-                result.push(readPom(repoDir));                
+                result.push(readPom(repoDir, project + "/" + repos[j]));
             }
         }
     }
@@ -65,6 +66,7 @@ module.exports = function(targetDir) {
             map[p.project] = {
                 dir: p.dir,
                 parent: p.parent,
+                subdir: p.subdir,
                 dependencies: p.dependencies
             }
         });
