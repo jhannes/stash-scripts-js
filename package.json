@@ -9,9 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "fs2": "^0.2.1",
+    "q": "^1.0.1",
     "request": "^2.39.0",
     "underscore": "^1.6.0",
-    "xml2js": "^0.4.4",
-    "q": "^1.0.1"
+    "xml2js": "^0.4.4"
   }
 }

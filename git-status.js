@@ -1,61 +1,44 @@
 var Q = require('q');
-var child_process = require('child_process');
+
+var path = require('path');
+var fs2 = require('fs2');
 var fs = require('fs');
+
+var exec = Q.nfbind(require('child_process').exec);
 
 var targetDir = require('./git-config').targetDir;
 
-var executeOnAllSubdirectories = function(dir, callback) {
-    var result = [];
-    var files = fs.readdirSync(dir);
-    for (var i=0; i<files.length; i++) {
-        var project = files[i];
-        var subdir = dir + "/" + project;
-        if (!fs.statSync(subdir).isDirectory()) continue;  
-        var repos = fs.readdirSync(subdir);
-        for (var j=0; j<repos.length; j++) {
-            var repoDir = dir + "/" + project + "/" + repos[j];
-            if (fs.statSync(repoDir).isDirectory()) {
-                result.push(callback(repoDir));
-            }
-        }
-    }
-    return Q.all(result);
+
+var getSubdirs = function(dir) {
+  var isSubdirectory = function(f) {
+    return f.indexOf(path.sep) != -1 && fs.statSync(targetDir + f).isDirectory();
+  };
+  var absolutePath = function(f) {
+    return dir + f;
+  };
+
+  return fs2.readdir(targetDir, {depth: 1}).then(function(result) {
+    return result.filter(isSubdirectory).map(absolutePath);
+  });
 };
 
 
 function gitStatus(dir) {
-    var deferred = Q.defer();
-    child_process.exec("git status -s", {cwd: dir}, function(err, stdout, stderr) {
-        if (err) {
-            return deferred.reject(err, stderr);
-        } else {
-            return deferred.resolve({dir:dir,changes:stdout});
-        }
-    });
-    return deferred.promise;
+    return exec("git status -s", {cwd: dir})
+        .then(function(result) {
+            console.log(dir);
+            console.log(result[0]);
+        });
 }
 
 function gitPull(dir) {
-    var deferred = Q.defer();
-    child_process.exec("git pull", {cwd: dir}, function(err, stdout, stderr) {
-        if (err) {
-            console.log("Error when pulling", dir);
-            return deferred.reject(err, stderr);
-        } else {
-            console.log("Pulled " + dir + " " + stdout);
-            return deferred.resolve({dir:dir,result:stdout});
-        }
-    });
-    return deferred.promise;
+    return exec("git pull", {cwd: dir})
+      .then(function(result) {
+        console.log(dir);
+        console.log(result[0]);
+      });
 }
 
-
-
-Q.all(executeOnAllSubdirectories(targetDir, gitStatus)).then(function(result) {
-    for (var i = 0; i < result.length; i++) {
-        console.log(result[i].dir);
-        console.log(result[i].changes);
-    }
-}).fail(function(error) {
-    console.log("Failure", error);
+Q.all(getSubdirs(targetDir).map(gitStatus)).done(function(result) {
+    console.log("Done:");
 });
