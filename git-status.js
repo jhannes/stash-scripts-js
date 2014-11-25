@@ -27,7 +27,7 @@ function gitStatus(dir) {
     return exec("git status -s", {cwd: dir})
         .then(function(result) {
             console.log(dir);
-            console.log(result[0]);
+            process.stdout.write(result[0]);
         });
 }
 
@@ -35,10 +35,13 @@ function gitPull(dir) {
     return exec("git pull", {cwd: dir})
       .then(function(result) {
         console.log(dir);
-        console.log(result[0]);
+        process.stdout.write(result[0]);
+      }, function(err) {
+        console.log("Error", dir);
+        console.log(err);
       });
 }
 
-Q.all(getSubdirs(targetDir).map(gitStatus)).done(function(result) {
-    console.log("Done:");
+Q.all(getSubdirs(targetDir).map(gitPull)).done(function(result) {
+    console.log("Done");
 });
